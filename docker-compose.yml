@@ -1,0 +1,39 @@
+services:
+    service_a:
+        image: ghcr.io/nathan-f40/LoginServiceJustFeed/service_a:latest
+        ports:
+            - "8001:8000"
+        networks:
+            - labnet
+
+
+    service_b:
+        image: ghcr.io/nathan-f40/BankingServiceJustFeed/service_b:latest
+        env_file: ./.env
+        depends_on:
+            - service_a
+        ports:
+            - "8002:8000"
+        networks:
+            - labnet
+
+
+    service_c:
+        image: ghcr.io/nathan-f40/NotificationServiceJustFeed/service_c:latest
+        ports:
+            - "8003:8000"
+        networks:
+            - labnet
+
+
+    service_d:
+        image: ghcr.io/nathan-f40/OrderServiceJustFeed/service_d:latest
+        env_file: ./.env
+        depends_on:
+            - service_a
+        ports:
+            - "8004:8000"
+        networks:
+            - labnet
+networks:
+    labnet:
