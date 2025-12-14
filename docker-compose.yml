@@ -1,36 +1,42 @@
 services:
     service_a:
-        image: ghcr.io/nathan-f40/LoginServiceJustFeed/service_a:latest
+        image: ghcr.io/nathan-f04/loginservicejustfeed/service_a:latest
+        command: uvicorn login_service.login:app --host 0.0.0.0 --port 8000
+        environment:
+            DATABASE_URL: "sqlite:///:memory:"
         ports:
             - "8001:8000"
         networks:
             - labnet
 
-
     service_b:
-        image: ghcr.io/nathan-f40/BankingServiceJustFeed/service_b:latest
+        image: ghcr.io/nathan-f04/bankingservicejustfeed/service_b:latest
+        command: uvicorn banking_service.banking:app --host 0.0.0.0 --port 8000
         env_file: ./.env
         depends_on:
             - service_a
+        environment:
+            DATABASE_URL: "sqlite:///:memory:"
         ports:
             - "8002:8000"
         networks:
             - labnet
 
-
     service_c:
-        image: ghcr.io/nathan-f40/NotificationServiceJustFeed/service_c:latest
+        image: ghcr.io/nathan-f04/notificationservicejustfeed/service_c:latest
         ports:
             - "8003:8000"
         networks:
             - labnet
 
-
     service_d:
-        image: ghcr.io/nathan-f40/OrderServiceJustFeed/service_d:latest
+        image: ghcr.io/nathan-f04/orderservicejustfeed/service_d:latest
+        command: uvicorn Src.order_service.orders:app --host 0.0.0.0 --port 8000
         env_file: ./.env
         depends_on:
             - service_a
+        environment:
+            DATABASE_URL: "sqlite:///:memory:"
         ports:
             - "8004:8000"
         networks:
