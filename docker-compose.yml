@@ -22,6 +22,7 @@ services:
         command: uvicorn login_service.login:app --host 0.0.0.0 --port 8000
         environment:
             DATABASE_URL: "postgresql://justfeed_user:justfeed_pass@postgres:5432/justfeed"
+            RABBIT_URL: "amqp://guest:guest@rabbitmq:5672/"
         ports:
             - "8001:8000"
         depends_on:
@@ -68,14 +69,14 @@ services:
             rabbitmq:
                 condition: service_healthy
         environment:
-            RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+            RABBIT_URL: "amqp://guest:guest@rabbitmq:5672/"
         ports:
-            - "8003:8000"
+            - "8080:8000"
         networks:
             - labnet
 
     service_d:
-        image: ghcr.io/nathan-f04/orderservicejustfeed/service_d:latest
+        image: ghcr.io/nathan-f04/orderservicejustfeed/service_d:abb385ede994da09d583aef7cc9b13ae0fee16e3
         command: uvicorn order_service.orders:app --host 0.0.0.0 --port 8000
         depends_on:
             postgres:
@@ -83,18 +84,23 @@ services:
         restart: on-failure
         environment:
             DATABASE_URL: "postgresql://justfeed_user:justfeed_pass@postgres:5432/justfeed"
+            RABBIT_URL: "amqp://guest:guest@rabbitmq:5672/"
         ports:
             - "8004:8000"
         networks:
             - labnet
 
     service_e:
-        image: ghcr.io/nathan-f04/frontendjustfeed/service_e:latest
+        image: ghcr.io/nathan-f04/frontendjustfeed/service_e:f34ff31f2870fbfa5a6f24f75a61b2fec937c7ea
         depends_on:
-            - service_a
-            - service_b
-            - service_c
-            - service_d
+            service_a:
+                condition: service_started
+            service_b:
+                condition: service_started
+            service_c:
+                condition: service_started
+            service_d:
+                condition: service_started
         environment:
             NEXT_PUBLIC_LOGIN_API_URL: "http://service_a:8000"
             NEXT_PUBLIC_BANKING_API_URL: "http://service_b:8000"
@@ -109,6 +115,7 @@ services:
             - "3000:3000"
         networks:
             - labnet
+        restart: on-failure
 
 networks:
     labnet:
