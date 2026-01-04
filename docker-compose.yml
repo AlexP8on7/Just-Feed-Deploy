@@ -1,10 +1,11 @@
 services:
     postgres:
-        image: postgres:15
+        image: postgres:latest
         environment:
             POSTGRES_DB: justfeed
             POSTGRES_USER: justfeed_user
             POSTGRES_PASSWORD: justfeed_pass
+            PGDATA: /var/lib/postgresql/data/pgdata
         ports:
             - "5432:5432"
         volumes:
@@ -33,7 +34,7 @@ services:
             - labnet
 
     rabbitmq:
-        image: rabbitmq:3-management
+        image: rabbitmq:management
         environment:
             RABBITMQ_DEFAULT_USER: guest
             RABBITMQ_DEFAULT_PASS: guest
@@ -54,9 +55,12 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
         restart: on-failure
         environment:
             DATABASE_URL: "postgresql://justfeed_user:justfeed_pass@postgres:5432/justfeed"
+            RABBIT_URL: "amqp://guest:guest@rabbitmq:5672/"
         ports:
             - "8002:8000"
         networks:
@@ -76,7 +80,7 @@ services:
             - labnet
 
     service_d:
-        image: ghcr.io/nathan-f04/orderservicejustfeed/service_d:abb385ede994da09d583aef7cc9b13ae0fee16e3
+        image: ghcr.io/nathan-f04/orderservicejustfeed/service_d:latest
         command: uvicorn order_service.orders:app --host 0.0.0.0 --port 8000
         depends_on:
             postgres:
@@ -91,7 +95,7 @@ services:
             - labnet
 
     service_e:
-        image: ghcr.io/nathan-f04/frontendjustfeed/service_e:f34ff31f2870fbfa5a6f24f75a61b2fec937c7ea
+        image: ghcr.io/nathan-f04/frontendjustfeed/service_e:latest
         depends_on:
             service_a:
                 condition: service_started
@@ -102,10 +106,11 @@ services:
             service_d:
                 condition: service_started
         environment:
-            NEXT_PUBLIC_LOGIN_API_URL: "http://service_a:8000"
-            NEXT_PUBLIC_BANKING_API_URL: "http://service_b:8000"
-            NEXT_PUBLIC_NOTIFICATION_API_URL: "http://service_c:8000"
-            NEXT_PUBLIC_ORDER_API_URL: "http://service_d:8000"
+            NEXT_PUBLIC_LOGIN_API_URL: "http://localhost:8001"
+            NEXT_PUBLIC_BANKING_API_URL: "http://localhost:8002"
+            NEXT_PUBLIC_NOTIFICATION_API_URL: "http://localhost:8080"
+            NEXT_PUBLIC_ORDER_API_URL: "http://localhost:8004"
+            NEXT_PUBLIC_WEBSOCKET_URL: "ws://localhost:8080/ws"
             LOGIN_API_URL: "http://service_a:8000"
             BANKING_API_URL: "http://service_b:8000"
             NOTIFICATION_API_URL: "http://service_c:8000"
